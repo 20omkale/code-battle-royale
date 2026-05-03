@@ -438,6 +438,14 @@ public class GameClient extends JFrame {
                 buildPodium(msg.names, msg.scores);
                 cards.show(root, "RESULT");
                 break;
+            case ERROR:
+                showProPopup("Error", msg.text, true);
+                // If they received this while joining (e.g. game already running), kick them back to JOIN screen
+                if (msg.text.contains("already running")) {
+                    try { if(out != null) sock.close(); } catch(Exception ex){}
+                    cards.show(root, "JOIN");
+                }
+                break;
             default: break;
         }
     }

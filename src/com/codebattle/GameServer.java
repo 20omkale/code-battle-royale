@@ -206,11 +206,17 @@ public class GameServer {
                             break;
 
                         case START:
-                            if (myRoom != null && myRoom.players.size() >= 1) {
-                                int rounds = msg.number > 0 ? msg.number : 5;
-                                String diff = (msg.text != null) ? msg.text : "Mixed";
-                                myRoom.broadcastEvent("*** Match started by " + name + "! (" + rounds + " Rounds | " + diff + " Mode)");
-                                myRoom.startGame(rounds, diff);
+                            if (myRoom != null) {
+                                if (myRoom.players.size() < 2) {
+                                    GameMessage err = new GameMessage(GameMessage.Type.ERROR);
+                                    err.text = "You need at least 2 players to start a multiplayer match!";
+                                    send(err);
+                                } else {
+                                    int rounds = msg.number > 0 ? msg.number : 5;
+                                    String diff = (msg.text != null) ? msg.text : "Mixed";
+                                    myRoom.broadcastEvent("*** Match started by " + name + "! (" + rounds + " Rounds | " + diff + " Mode)");
+                                    myRoom.startGame(rounds, diff);
+                                }
                             }
                             break;
 
