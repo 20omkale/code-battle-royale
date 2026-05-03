@@ -69,18 +69,13 @@ java -cp build com.codebattle.GameClient
 
 ## 🚀 Quick Demo Commands
 
-For university presentations or quick tests, you do **not** need to memorize long `javac` commands. You can simply use these 1-click batch files from the terminal:
+For university presentations, keep it simple. You don't need any complex folders or scripts. Just open your terminal and use these tiny commands:
 
-- `build.bat` — Instantly compiles the entire project into the `build` folder.
-- `server.bat` — Starts the Game Server.
-- `client.bat` — Starts the Game Client.
+- **Compile**: `javac src/com/codebattle/*.java`
+- **Run Server**: `java -cp src com.codebattle.GameServer`
+- **Run Client**: `java -cp src com.codebattle.GameClient`
 
-Alternatively, if you want to type the shortest possible manual commands:
-- **Compile**: `javac -d build src/com/codebattle/*.java`
-- **Run Server**: `java -cp build com.codebattle.GameServer`
-- **Run Client**: `java -cp build com.codebattle.GameClient`
-
-You can also just double-click `START_GAME.bat` and use the built-in Command Center!
+Alternatively, you can just double-click `START_GAME.bat` and use the built-in Command Center!
 
 ---
 
