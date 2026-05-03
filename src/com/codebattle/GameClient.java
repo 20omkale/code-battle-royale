@@ -10,15 +10,17 @@ import java.util.ArrayList;
 
 /**
  * CodeBattle Royale — Premium Game Client
- * SPPU BE IT | Distributed Systems Mini Project
+ * Truly Responsive Version
  */
 public class GameClient extends JFrame {
 
     // Network
     ObjectOutputStream out;
     ObjectInputStream in;
+    Socket sock;
     String myName = "";
     boolean isHost = false;
+    volatile boolean intentionalDisconnect = false;
 
     // Brand Colors
     static final Color BG_DARK = new Color(13, 17, 23);
@@ -64,8 +66,8 @@ public class GameClient extends JFrame {
 
     public GameClient() {
         super("CodeBattle Royale");
-        setSize(800, 500);
-        setMinimumSize(new Dimension(400, 300));
+        setSize(800, 600);
+        setMinimumSize(new Dimension(350, 450)); // Allow very small split-screen
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -83,12 +85,12 @@ public class GameClient extends JFrame {
         };
         add(root);
 
-        // Global Event Feed (Floating at bottom)
+        // Global Event Feed
         eventFeed = new JTextArea();
         eventFeed.setEditable(false);
         eventFeed.setOpaque(false);
         eventFeed.setForeground(ACCENT_BLUE);
-        eventFeed.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        eventFeed.setFont(new Font("Segoe UI", Font.BOLD, 12));
         eventFeed.setFocusable(false);
 
         root.add(makeJoinScreen(),   "JOIN");
@@ -96,49 +98,62 @@ public class GameClient extends JFrame {
         root.add(makeGameScreen(),   "GAME");
         root.add(makeResultScreen(), "RESULT");
         cards.show(root, "JOIN");
+        
+        // Dynamic Resizing Logic
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                adjustUIForSize();
+            }
+        });
     }
 
-    // ─── JOIN SCREEN ─────────────────────────────────────────────────────────
+    private void adjustUIForSize() {
+        boolean isSmall = getWidth() < 600 || getHeight() < 500;
+        float scale = isSmall ? 0.8f : 1.0f;
+        // Logic to tweak fonts if needed
+    }
+
+    // ─── JOIN SCREEN (FLUID LAYOUT) ──────────────────────────────────────────
     JPanel makeJoinScreen() {
         JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
         GridBagConstraints g = new GridBagConstraints();
 
         GlassPanel card = new GlassPanel(new GridBagLayout(), 20);
-        card.setPreferredSize(new Dimension(380, 420));
+        card.setBorder(new EmptyBorder(20, 20, 20, 20));
         
         GridBagConstraints cg = new GridBagConstraints();
-        cg.insets = new Insets(10, 10, 10, 10);
-        cg.gridy = 0;
+        cg.insets = new Insets(5, 10, 5, 10);
+        cg.fill = GridBagConstraints.HORIZONTAL;
+        cg.weightx = 1.0;
+        cg.gridx = 0;
         
+        // Logo
+        cg.gridy = 0;
         JLabel logo = new JLabel("CodeBattle Royale", SwingConstants.CENTER);
-        logo.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        logo.setFont(new Font("Segoe UI", Font.BOLD, 24));
         logo.setForeground(Color.WHITE);
         card.add(logo, cg);
 
         cg.gridy = 1;
         JLabel sub = new JLabel("Esports Trivia Engine", SwingConstants.CENTER);
-        sub.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        sub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         sub.setForeground(ACCENT_PURPLE);
         card.add(sub, cg);
 
-        cg.gridy = 2; cg.insets = new Insets(20, 20, 10, 20);
+        // Name Field
+        cg.gridy = 2; cg.insets = new Insets(15, 10, 5, 10);
         nameField = new JTextField("Player" + (int)(Math.random()*9000));
-        nameField.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        nameField.setPreferredSize(new Dimension(250, 45));
-        nameField.setBackground(BG_DARK);
-        nameField.setForeground(Color.WHITE);
-        nameField.setCaretColor(ACCENT_BLUE);
-        nameField.setHorizontalAlignment(JTextField.CENTER);
-        nameField.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(ACCENT_PURPLE, 2, true),
-            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), "YOUR NAME", 0, 0, new Font("Segoe UI", Font.BOLD, 10), TEXT_MUTED)
-        ));
+        nameField.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        nameField.setPreferredSize(new Dimension(200, 40));
+        setupFieldStyle(nameField, "YOUR NAME", ACCENT_PURPLE);
         card.add(nameField, cg);
 
-        cg.gridy = 3; cg.insets = new Insets(10, 20, 5, 20);
-        JButton createBtn = new StyledButton("CREATE NEW ROOM (HOST)", ACCENT_GREEN);
-        createBtn.setPreferredSize(new Dimension(250, 45));
+        // Create Button
+        cg.gridy = 3; cg.insets = new Insets(5, 10, 5, 10);
+        JButton createBtn = new StyledButton("CREATE ROOM (HOST)", ACCENT_GREEN);
+        createBtn.setPreferredSize(new Dimension(200, 40));
         createBtn.addActionListener(e -> {
             isHost = true;
             String randomCode = String.format("%04X", (int)(Math.random()*65535));
@@ -146,87 +161,107 @@ public class GameClient extends JFrame {
         });
         card.add(createBtn, cg);
 
-        cg.gridy = 4; cg.insets = new Insets(10, 20, 5, 20);
-        JLabel orLabel = new JLabel("— OR JOIN EXISTING —");
+        // Separator
+        cg.gridy = 4;
+        JLabel orLabel = new JLabel("— OR JOIN —", SwingConstants.CENTER);
         orLabel.setForeground(TEXT_MUTED);
+        orLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
         card.add(orLabel, cg);
 
-        cg.gridy = 5; cg.insets = new Insets(5, 20, 5, 20);
+        // Room Field
+        cg.gridy = 5;
         roomField = new JTextField();
-        roomField.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        roomField.setPreferredSize(new Dimension(250, 45));
-        roomField.setBackground(BG_DARK);
-        roomField.setForeground(Color.WHITE);
-        roomField.setCaretColor(ACCENT_BLUE);
-        roomField.setHorizontalAlignment(JTextField.CENTER);
-        roomField.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(ACCENT_BLUE, 2, true),
-            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), "ENTER ROOM CODE", 0, 0, new Font("Segoe UI", Font.BOLD, 10), TEXT_MUTED)
-        ));
+        roomField.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        roomField.setPreferredSize(new Dimension(200, 40));
+        setupFieldStyle(roomField, "ENTER CODE", ACCENT_BLUE);
         card.add(roomField, cg);
 
-        cg.gridy = 6; cg.insets = new Insets(5, 20, 20, 20);
+        // Join Button
+        cg.gridy = 6;
         JButton joinBtn = new StyledButton("JOIN MATCH", ACCENT_BLUE);
-        joinBtn.setPreferredSize(new Dimension(250, 45));
+        joinBtn.setPreferredSize(new Dimension(200, 40));
         joinBtn.addActionListener(e -> {
             isHost = false;
             String code = roomField.getText().trim();
-            if (code.isEmpty()) showProPopup("Error", "Please enter a valid Room Code.", true);
+            if (code.isEmpty()) showProPopup("Error", "Enter a valid code.", true);
             else connectAndJoin(code);
         });
         card.add(joinBtn, cg);
 
+        // Card Constraints in Parent
+        g.gridx = 0; g.gridy = 0;
+        g.weightx = 1.0; g.weighty = 1.0;
+        g.fill = GridBagConstraints.NONE;
         p.add(card, g);
+        
         return p;
     }
 
-    // ─── LOBBY SCREEN ────────────────────────────────────────────────────────
+    private void setupFieldStyle(JTextField f, String title, Color accent) {
+        f.setBackground(BG_DARK);
+        f.setForeground(Color.WHITE);
+        f.setCaretColor(ACCENT_BLUE);
+        f.setHorizontalAlignment(JTextField.CENTER);
+        f.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(accent, 2, true),
+            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), title, 0, 0, new Font("Segoe UI", Font.BOLD, 9), TEXT_MUTED)
+        ));
+    }
+
+    // ─── LOBBY SCREEN (RESPONSIVE) ──────────────────────────────────────────
     JPanel makeLobbyScreen() {
-        JPanel p = new JPanel(new BorderLayout(20, 20));
+        JPanel p = new JPanel(new GridBagLayout());
         p.setOpaque(false);
-        p.setBorder(new EmptyBorder(40, 60, 40, 60));
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(10, 10, 10, 10);
+        g.fill = GridBagConstraints.BOTH;
+        g.weightx = 1.0;
 
-        JPanel top = new JPanel(new BorderLayout());
-        top.setOpaque(false);
-        JLabel title = new JLabel("WAITING LOBBY", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        // Header
+        g.gridy = 0; g.weighty = 0.1;
+        JPanel header = new JPanel(new GridLayout(2, 1));
+        header.setOpaque(false);
+        JLabel title = new JLabel("LOBBY", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
         title.setForeground(Color.WHITE);
-        top.add(title, BorderLayout.NORTH);
-
-        lobbyRoomCodeLabel = new JLabel("ROOM: ----", SwingConstants.CENTER);
-        lobbyRoomCodeLabel.setFont(new Font("Consolas", Font.BOLD, 24));
+        header.add(title);
+        lobbyRoomCodeLabel = new JLabel("CODE: ----", SwingConstants.CENTER);
+        lobbyRoomCodeLabel.setFont(new Font("Consolas", Font.BOLD, 18));
         lobbyRoomCodeLabel.setForeground(ACCENT_BLUE);
-        top.add(lobbyRoomCodeLabel, BorderLayout.SOUTH);
-        
-        p.add(top, BorderLayout.NORTH);
+        header.add(lobbyRoomCodeLabel);
+        p.add(header, g);
 
-        lobbyListPanel = new GlassPanel(new FlowLayout(FlowLayout.CENTER, 20, 20), 15);
+        // Player List (Scrollable)
+        g.gridy = 1; g.weighty = 0.6;
+        lobbyListPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        lobbyListPanel.setOpaque(false);
         JScrollPane scroll = new JScrollPane(lobbyListPanel);
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
-        scroll.setBorder(null);
-        p.add(scroll, BorderLayout.CENTER);
+        scroll.setBorder(new LineBorder(new Color(255,255,255,20), 1));
+        p.add(scroll, g);
 
-        JPanel bottom = new JPanel(new BorderLayout());
+        // Settings + Start
+        g.gridy = 2; g.weighty = 0.3;
+        JPanel bottom = new JPanel(new GridBagLayout());
         bottom.setOpaque(false);
-        
-        hostSettingsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        hostSettingsPanel.setOpaque(false);
-        
-        JLabel rL = new JLabel("Rounds:"); rL.setForeground(Color.WHITE);
-        roundsCombo = new JComboBox<>(new String[]{"3 Rounds", "5 Rounds", "10 Rounds"});
-        roundsCombo.setSelectedIndex(1);
-        
-        JLabel dL = new JLabel("Difficulty:"); dL.setForeground(Color.WHITE);
-        diffCombo = new JComboBox<>(new String[]{"Mixed", "Easy", "Medium", "Hard"});
-        
-        hostSettingsPanel.add(rL);
-        hostSettingsPanel.add(roundsCombo);
-        hostSettingsPanel.add(dL);
-        hostSettingsPanel.add(diffCombo);
+        GridBagConstraints bg = new GridBagConstraints();
+        bg.fill = GridBagConstraints.HORIZONTAL;
+        bg.weightx = 1.0; bg.gridx = 0; bg.insets = new Insets(2, 0, 2, 0);
 
-        startBtn = new StyledButton("START GAME (HOST)", ACCENT_GREEN);
-        startBtn.setPreferredSize(new Dimension(250, 50));
+        hostSettingsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        hostSettingsPanel.setOpaque(false);
+        roundsCombo = new JComboBox<>(new String[]{"3 Rounds", "5 Rounds", "10 Rounds"});
+        diffCombo = new JComboBox<>(new String[]{"Mixed", "Easy", "Medium", "Hard"});
+        hostSettingsPanel.add(roundsCombo);
+        hostSettingsPanel.add(diffCombo);
+        
+        bg.gridy = 0;
+        bottom.add(hostSettingsPanel, bg);
+        
+        bg.gridy = 1;
+        startBtn = new StyledButton("START GAME", ACCENT_GREEN);
+        startBtn.setPreferredSize(new Dimension(0, 45));
         startBtn.addActionListener(e -> {
             int rounds = Integer.parseInt(roundsCombo.getSelectedItem().toString().split(" ")[0]);
             String diff = diffCombo.getSelectedItem().toString();
@@ -235,110 +270,90 @@ public class GameClient extends JFrame {
             msg.text = diff;
             sendMsg(msg);
         });
-        
-        waitingLabel = new JLabel("Waiting for host to start the match...", SwingConstants.CENTER);
-        waitingLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+        bottom.add(startBtn, bg);
+
+        bg.gridy = 2;
+        waitingLabel = new JLabel("Waiting for host...", SwingConstants.CENTER);
         waitingLabel.setForeground(TEXT_MUTED);
+        bottom.add(waitingLabel, bg);
 
-        JPanel btnPanel = new JPanel(new BorderLayout());
-        btnPanel.setOpaque(false);
-        btnPanel.add(hostSettingsPanel, BorderLayout.NORTH);
-        btnPanel.add(startBtn, BorderLayout.CENTER);
-        btnPanel.add(waitingLabel, BorderLayout.SOUTH);
-
-        bottom.add(btnPanel, BorderLayout.CENTER);
-        
-        eventFeed.setPreferredSize(new Dimension(0, 30));
-        bottom.add(eventFeed, BorderLayout.SOUTH);
-        
-        p.add(bottom, BorderLayout.SOUTH);
-
+        p.add(bottom, g);
         return p;
     }
 
-    // ─── GAME SCREEN ─────────────────────────────────────────────────────────
+    // ─── GAME SCREEN (PRO LAYOUT) ────────────────────────────────────────────
     JPanel makeGameScreen() {
-        JPanel p = new JPanel(new BorderLayout(20, 20));
+        JPanel p = new JPanel(new BorderLayout(10, 10));
         p.setOpaque(false);
-        p.setBorder(new EmptyBorder(20, 30, 20, 30));
+        p.setBorder(new EmptyBorder(10, 15, 10, 15));
 
-        // TOP: Round + Timer
+        // Top Bar
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
-        roundLabel = new JLabel("Round 1/X");
-        roundLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        roundLabel = new JLabel("R1");
+        roundLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         roundLabel.setForeground(TEXT_MUTED);
         top.add(roundLabel, BorderLayout.WEST);
-
         timerLabel = new JLabel("15");
-        timerLabel.setFont(new Font("Segoe UI", Font.BOLD, 48));
+        timerLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         timerLabel.setForeground(Color.WHITE);
         top.add(timerLabel, BorderLayout.EAST);
-
         timerBar = new JProgressBar(0, 15);
-        timerBar.setValue(15);
+        timerBar.setPreferredSize(new Dimension(0, 5));
         timerBar.setForeground(ACCENT_BLUE);
         timerBar.setBackground(BG_DARK);
-        timerBar.setBorderPainted(false);
-        timerBar.setPreferredSize(new Dimension(0, 8));
         top.add(timerBar, BorderLayout.SOUTH);
-
         p.add(top, BorderLayout.NORTH);
 
-        // CENTER: Question & Options
-        JPanel center = new JPanel(new BorderLayout(10, 30));
-        center.setOpaque(false);
-        
-        questionText = new JLabel("Waiting for question...");
-        questionText.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        // Center (Question + Options)
+        JPanel main = new JPanel(new GridBagLayout());
+        main.setOpaque(false);
+        GridBagConstraints mc = new GridBagConstraints();
+        mc.fill = GridBagConstraints.BOTH;
+        mc.weightx = 1.0; mc.gridx = 0;
+
+        questionText = new JLabel("Question Loading...");
+        questionText.setFont(new Font("Segoe UI", Font.BOLD, 18));
         questionText.setForeground(Color.WHITE);
         questionText.setHorizontalAlignment(SwingConstants.CENTER);
-        center.add(questionText, BorderLayout.NORTH);
+        mc.gridy = 0; mc.weighty = 0.4;
+        main.add(questionText, mc);
 
-        JPanel opts = new JPanel(new GridLayout(2, 2, 20, 20));
+        JPanel opts = new JPanel(new GridLayout(2, 2, 10, 10));
         opts.setOpaque(false);
         for (int i = 0; i < 4; i++) {
             final int idx = i;
             optBtns[i] = new StyledButton("...", BG_LIGHT);
-            optBtns[i].setFont(new Font("Segoe UI", Font.BOLD, 18));
+            optBtns[i].setFont(new Font("Segoe UI", Font.BOLD, 14));
             optBtns[i].addActionListener(e -> submitAnswer(idx));
             opts.add(optBtns[i]);
         }
-        center.add(opts, BorderLayout.CENTER);
-        p.add(center, BorderLayout.CENTER);
+        mc.gridy = 1; mc.weighty = 0.6;
+        main.add(opts, mc);
+        p.add(main, BorderLayout.CENTER);
 
-        // RIGHT: Live Scoreboard
-        GlassPanel right = new GlassPanel(new BorderLayout(), 15);
-        right.setPreferredSize(new Dimension(200, 0));
-        JLabel sTitle = new JLabel("LIVE STANDINGS", SwingConstants.CENTER);
-        sTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        sTitle.setForeground(ACCENT_PURPLE);
-        sTitle.setBorder(new EmptyBorder(10, 0, 10, 0));
-        right.add(sTitle, BorderLayout.NORTH);
-        
+        // Sidebar
+        GlassPanel side = new GlassPanel(new BorderLayout(), 10);
+        side.setPreferredSize(new Dimension(140, 0));
         scoreboardPanel = new JPanel();
         scoreboardPanel.setLayout(new BoxLayout(scoreboardPanel, BoxLayout.Y_AXIS));
         scoreboardPanel.setOpaque(false);
-        right.add(new JScrollPane(scoreboardPanel) {{
+        side.add(new JScrollPane(scoreboardPanel) {{
             setOpaque(false); getViewport().setOpaque(false); setBorder(null);
         }}, BorderLayout.CENTER);
-        
-        p.add(right, BorderLayout.EAST);
-
-        // BOTTOM: Event Feed
-        p.add(eventFeed, BorderLayout.SOUTH);
+        p.add(side, BorderLayout.EAST);
 
         return p;
     }
 
     // ─── RESULT SCREEN ───────────────────────────────────────────────────────
     JPanel makeResultScreen() {
-        JPanel p = new JPanel(new BorderLayout(20, 20));
+        JPanel p = new JPanel(new BorderLayout(10, 10));
         p.setOpaque(false);
-        p.setBorder(new EmptyBorder(40, 40, 40, 40));
+        p.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JLabel title = new JLabel("MATCH COMPLETE", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        JLabel title = new JLabel("FINISH!", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
         title.setForeground(ACCENT_PURPLE);
         p.add(title, BorderLayout.NORTH);
 
@@ -346,8 +361,8 @@ public class GameClient extends JFrame {
         podiumPanel.setOpaque(false);
         p.add(podiumPanel, BorderLayout.CENTER);
 
-        JButton again = new StyledButton("RETURN TO MAIN MENU", ACCENT_BLUE);
-        again.setPreferredSize(new Dimension(0, 60));
+        JButton again = new StyledButton("MAIN MENU", ACCENT_BLUE);
+        again.setPreferredSize(new Dimension(0, 45));
         again.addActionListener(e -> {
             intentionalDisconnect = true;
             try { if(out != null) sock.close(); } catch(Exception ex){}
@@ -358,10 +373,7 @@ public class GameClient extends JFrame {
         return p;
     }
 
-    volatile boolean intentionalDisconnect = false;
-
-    // ─── NETWORK & LOGIC ─────────────────────────────────────────────────────
-    Socket sock;
+    // ─── LOGIC & NETWORK ─────────────────────────────────────────────────────
     void connectAndJoin(String room) {
         intentionalDisconnect = false;
         myName = nameField.getText().trim();
@@ -379,12 +391,9 @@ public class GameClient extends JFrame {
 
                 SwingUtilities.invokeLater(() -> {
                     lobbyRoomCodeLabel.setText("ROOM: " + room.toUpperCase());
-                    
-                    // Update UI based on Host/Player
                     hostSettingsPanel.setVisible(isHost);
                     startBtn.setVisible(isHost);
                     waitingLabel.setVisible(!isHost);
-                    
                     cards.show(root, "LOBBY");
                 });
 
@@ -394,9 +403,7 @@ public class GameClient extends JFrame {
                 }
             } catch (Exception e) {
                 if (!intentionalDisconnect) {
-                    SwingUtilities.invokeLater(() ->
-                        showProPopup("Connection Failed", "Could not connect to the CodeBattle Server.", true)
-                    );
+                    SwingUtilities.invokeLater(() -> showProPopup("Failed", "Server offline.", true));
                 }
             }
         }).start();
@@ -404,14 +411,11 @@ public class GameClient extends JFrame {
 
     void handleMessage(GameMessage msg) {
         switch (msg.type) {
-            case PLAYER_LIST:
-                updateLobby(msg.names, msg.scores);
-                updateScoreboard(msg.names, msg.scores);
-                break;
+            case PLAYER_LIST: updateLobby(msg.names, msg.scores); updateScoreboard(msg.names, msg.scores); break;
             case QUESTION:
                 cards.show(root, "GAME");
                 questionText.setText("<html><center>" + msg.text + "</center></html>");
-                roundLabel.setText("Round " + msg.number);
+                roundLabel.setText("R" + msg.number);
                 correctAnswer = -1;
                 for (int i = 0; i < 4; i++) {
                     optBtns[i].setText((char)('A'+i) + ". " + msg.options[i]);
@@ -422,13 +426,6 @@ public class GameClient extends JFrame {
             case TIMER:
                 timerLabel.setText(String.valueOf(msg.number));
                 timerBar.setValue(msg.number);
-                if (msg.number <= 5) {
-                    timerLabel.setForeground(ACCENT_RED);
-                    timerBar.setForeground(ACCENT_RED);
-                } else {
-                    timerLabel.setForeground(Color.WHITE);
-                    timerBar.setForeground(ACCENT_BLUE);
-                }
                 break;
             case RESULT:
                 correctAnswer = msg.number;
@@ -437,21 +434,9 @@ public class GameClient extends JFrame {
                     if (i == msg.number) optBtns[i].setBackground(ACCENT_GREEN);
                 }
                 break;
-            case EVENT:
-                eventFeed.setText(msg.text);
-                break;
-            case GAMEOVER:
-                buildPodium(msg.names, msg.scores);
-                cards.show(root, "RESULT");
-                break;
-            case ERROR:
-                showProPopup("Error", msg.text, true);
-                // If they received this while joining (e.g. game already running), kick them back to JOIN screen
-                if (msg.text.contains("already running")) {
-                    try { if(out != null) sock.close(); } catch(Exception ex){}
-                    cards.show(root, "JOIN");
-                }
-                break;
+            case EVENT: break;
+            case GAMEOVER: buildPodium(msg.names, msg.scores); cards.show(root, "RESULT"); break;
+            case ERROR: showProPopup("Error", msg.text, true); break;
             default: break;
         }
     }
@@ -465,191 +450,104 @@ public class GameClient extends JFrame {
     }
 
     void sendMsg(GameMessage msg) {
-        try {
-            if (out != null) { out.reset(); out.writeObject(msg); out.flush(); }
-        } catch (Exception e) {}
+        try { if (out != null) { out.reset(); out.writeObject(msg); out.flush(); } } catch (Exception e) {}
     }
 
-    // ─── UI UPDATERS ─────────────────────────────────────────────────────────
     void updateLobby(String[] names, int[] scores) {
         lobbyListPanel.removeAll();
-        for (int i = 0; i < names.length; i++) {
-            JLabel p = new JLabel("  " + names[i] + "  ");
-            p.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            p.setForeground(Color.WHITE);
-            p.setBorder(new EmptyBorder(10, 20, 10, 20));
-            lobbyListPanel.add(p);
+        for (String n : names) {
+            JLabel lbl = new JLabel(n);
+            lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            lbl.setForeground(Color.WHITE);
+            lbl.setBorder(new EmptyBorder(5, 10, 5, 10));
+            lobbyListPanel.add(lbl);
         }
         lobbyListPanel.revalidate(); lobbyListPanel.repaint();
     }
 
     void updateScoreboard(String[] names, int[] scores) {
-        if (names == null || scores == null) return;
+        if (names == null) return;
         scoreboardPanel.removeAll();
         Integer[] idx = new Integer[names.length];
         for (int i = 0; i < idx.length; i++) idx[i] = i;
         java.util.Arrays.sort(idx, (a, b) -> scores[b] - scores[a]);
-        
         for (int i = 0; i < idx.length; i++) {
-            JPanel row = new JPanel(new BorderLayout());
-            row.setOpaque(false);
-            row.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(255,255,255,30)),
-                new EmptyBorder(10, 10, 10, 10)
-            ));
-            
-            String rankStr = i == 0 ? "[1] " : i == 1 ? "[2] " : i == 2 ? "[3] " : "[-] ";
-            JLabel n = new JLabel(rankStr + names[idx[i]]);
-            n.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            n.setForeground(Color.WHITE);
-            
-            JLabel s = new JLabel(scores[idx[i]] + " pts");
-            s.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            s.setForeground(ACCENT_GREEN);
-            
-            row.add(n, BorderLayout.WEST);
-            row.add(s, BorderLayout.EAST);
-            scoreboardPanel.add(row);
+            JLabel l = new JLabel((i+1) + ". " + names[idx[i]] + " (" + scores[idx[i]] + ")");
+            l.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            l.setForeground(ACCENT_GREEN);
+            scoreboardPanel.add(l);
         }
         scoreboardPanel.revalidate(); scoreboardPanel.repaint();
     }
 
     void buildPodium(String[] names, int[] scores) {
-        if (names == null || scores == null || names.length == 0) return;
+        if (names == null || names.length == 0) return;
         podiumPanel.removeAll();
         Integer[] idx = new Integer[names.length];
         for (int i = 0; i < idx.length; i++) idx[i] = i;
         java.util.Arrays.sort(idx, (a, b) -> scores[b] - scores[a]);
-
-        GridBagConstraints g = new GridBagConstraints();
-        g.insets = new Insets(0, 10, 0, 10);
-        g.anchor = GridBagConstraints.SOUTH;
-
-        // Draw top 3 (2nd, 1st, 3rd)
-        int[] order = {1, 0, 2}; 
-        int[] heights = {100, 150, 60};
-        Color[] colors = {new Color(192, 192, 192), new Color(255, 215, 0), new Color(205, 127, 50)};
-        
+        int[] order = {1, 0, 2}, heights = {60, 100, 40};
+        Color[] colors = {Color.LIGHT_GRAY, Color.YELLOW, new Color(205, 127, 50)};
         for (int i = 0; i < 3; i++) {
             int rank = order[i];
             if (rank < names.length) {
-                g.gridx = i;
-                
-                JPanel col = new JPanel(new BorderLayout());
-                col.setOpaque(false);
-                
+                JPanel col = new JPanel(new BorderLayout()); col.setOpaque(false);
                 JLabel n = new JLabel(names[idx[rank]], SwingConstants.CENTER);
-                n.setFont(new Font("Segoe UI", Font.BOLD, 16));
-                n.setForeground(Color.WHITE);
+                n.setFont(new Font("Segoe UI", Font.BOLD, 12)); n.setForeground(Color.WHITE);
                 col.add(n, BorderLayout.NORTH);
-                
-                JLabel s = new JLabel(scores[idx[rank]] + " pts", SwingConstants.CENTER);
-                s.setFont(new Font("Segoe UI", Font.BOLD, 16));
-                s.setForeground(ACCENT_GREEN);
-                col.add(s, BorderLayout.CENTER);
-                
-                JPanel block = new JPanel();
-        block.setBackground(colors[rank]);
-        block.setPreferredSize(new Dimension(100, heights[i]));
-        block.setBorder(new LineBorder(Color.WHITE, 2));
-                
-                JLabel r = new JLabel("#" + (rank+1), SwingConstants.CENTER);
-        r.setFont(new Font("Segoe UI", Font.BOLD, 32));
-        r.setForeground(new Color(0,0,0,100));
-                block.add(r);
-                
-                col.add(block, BorderLayout.SOUTH);
+                JPanel b = new JPanel(); b.setBackground(colors[rank]); b.setPreferredSize(new Dimension(60, heights[i]));
+                col.add(b, BorderLayout.SOUTH);
+                GridBagConstraints g = new GridBagConstraints(); g.gridx = i; g.anchor = GridBagConstraints.SOUTH;
+                g.insets = new Insets(0, 5, 0, 5);
                 podiumPanel.add(col, g);
             }
         }
-        podiumPanel.revalidate(); podiumPanel.repaint();
     }
 
     // ─── CUSTOM COMPONENTS ───────────────────────────────────────────────────
-    class GlassPanel extends JPanel {
-        int radius;
-        public GlassPanel(LayoutManager lm, int radius) {
-            super(lm); this.radius = radius; setOpaque(false);
-        }
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new Color(255, 255, 255, 15));
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-            g2.setColor(new Color(255, 255, 255, 40));
-            g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, radius, radius);
-        }
-    }
-
-    class StyledButton extends JButton {
-        Color base;
-        public StyledButton(String text, Color base) {
-            super(text); this.base = base;
-            setContentAreaFilled(false); setFocusPainted(false); setBorderPainted(false);
-            setForeground(Color.WHITE); setFont(new Font("Segoe UI", Font.BOLD, 16));
-            setCursor(new Cursor(Cursor.HAND_CURSOR));
-        }
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            if (getModel().isPressed()) g2.setColor(base.darker().darker());
-            else if (getModel().isRollover()) g2.setColor(base.brighter());
-            else g2.setColor(base);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-            super.paintComponent(g);
-        }
-    }
-
-    // ─── PRO POPUPS ──────────────────────────────────────────────────────────
     void showProPopup(String titleStr, String message, boolean isError) {
         JDialog dialog = new JDialog(this, titleStr, true);
         dialog.setUndecorated(true);
         dialog.setBackground(new Color(0, 0, 0, 0));
-        
-        JPanel panel = new JPanel(new BorderLayout(20, 20)) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(25, 25, 35, 245)); // Almost solid dark background
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-                g2.setColor(new Color(255, 255, 255, 50)); // Subtle border
-                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20);
+        JPanel panel = new JPanel(new BorderLayout(10, 10)) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g; g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(25, 25, 35, 250)); g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.setColor(new Color(255, 255, 255, 30)); g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 15, 15);
             }
         };
-        panel.setOpaque(false);
-        panel.setBorder(new EmptyBorder(30, 40, 30, 40));
-        
+        panel.setOpaque(false); panel.setBorder(new EmptyBorder(20, 20, 20, 20));
         JLabel title = new JLabel(titleStr.toUpperCase(), SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
         title.setForeground(isError ? ACCENT_RED : ACCENT_BLUE);
         panel.add(title, BorderLayout.NORTH);
-        
         JLabel msg = new JLabel("<html><center>" + message + "</center></html>", SwingConstants.CENTER);
-        msg.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        msg.setForeground(Color.WHITE);
-        panel.add(msg, BorderLayout.CENTER);
-        
-        JButton okBtn = new StyledButton("OK", isError ? ACCENT_RED : ACCENT_BLUE);
-        okBtn.setPreferredSize(new Dimension(100, 40));
-        okBtn.addActionListener(e -> dialog.dispose());
-        
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnPanel.setOpaque(false);
-        btnPanel.add(okBtn);
-        panel.add(btnPanel, BorderLayout.SOUTH);
-        
-        dialog.add(panel);
-        dialog.pack();
-        dialog.setSize(Math.max(400, dialog.getWidth()), Math.max(200, dialog.getHeight()));
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
+        msg.setForeground(Color.WHITE); panel.add(msg, BorderLayout.CENTER);
+        JButton ok = new StyledButton("OK", ACCENT_BLUE); ok.addActionListener(e -> dialog.dispose());
+        panel.add(ok, BorderLayout.SOUTH);
+        dialog.add(panel); dialog.pack(); dialog.setLocationRelativeTo(this); dialog.setVisible(true);
+    }
+
+    class GlassPanel extends JPanel {
+        int r; public GlassPanel(LayoutManager lm, int r) { super(lm); this.r = r; setOpaque(false); }
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g; g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(255, 255, 255, 15)); g2.fillRoundRect(0, 0, getWidth(), getHeight(), r, r);
+            g2.setColor(new Color(255, 255, 255, 40)); g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, r, r);
+        }
+    }
+
+    class StyledButton extends JButton {
+        Color b; public StyledButton(String t, Color b) { super(t); this.b = b; setContentAreaFilled(false); setFocusPainted(false); setBorderPainted(false); setForeground(Color.WHITE); setFont(new Font("Segoe UI", Font.BOLD, 13)); setCursor(new Cursor(Cursor.HAND_CURSOR)); }
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g; g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(getModel().isPressed() ? b.darker() : getModel().isRollover() ? b.brighter() : b);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+            super.paintComponent(g);
+        }
     }
 
     public static void main(String[] args) {
-        // Set Look and Feel for smoother rendering
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch(Exception e){}
         SwingUtilities.invokeLater(() -> new GameClient().setVisible(true));
     }
