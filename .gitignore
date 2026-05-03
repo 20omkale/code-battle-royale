@@ -1,4 +1,21 @@
-node_modules/
-.env
-dist/
+# Java Build Artifacts
 build/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE Specific
+.idea/
+.vscode/
+*.iml
+*.project
+*.classpath
+*.settings/
+
+# OS Specific
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
