@@ -1,55 +1,61 @@
 @echo off
-title CodeBattle Royale - Command Center
+title CodeBattle Royale Command Center
+color 0A
+
 :menu
 cls
-echo ============================================
-echo   CODEBATTLE ROYALE - COMMAND CENTER
-echo ============================================
-echo.
-echo   [1] Compile Project
-echo   [2] Start Server
-echo   [3] Start Client
-echo   [4] Start Server + 2 Clients (Quick Play)
-echo   [5] Exit
-echo.
-set /p choice="Enter choice: "
+echo ==========================================
+echo       CODEBATTLE ROYALE - COMMAND CENTER
+echo ==========================================
+echo 1. Compile Source Code
+echo 2. Start Game Server (Host)
+echo 3. Start Game Client (Player)
+echo 4. Quick Play (Compile + Start Server + 2 Clients)
+echo 5. Exit
+echo ==========================================
+set /p choice="Enter your choice (1-5): "
 
 if "%choice%"=="1" goto compile
 if "%choice%"=="2" goto server
 if "%choice%"=="3" goto client
 if "%choice%"=="4" goto quickplay
-if "%choice%"=="5" exit
+if "%choice%"=="5" goto eof
 goto menu
 
 :compile
-echo Compiling...
-javac -encoding UTF-8 -d build src/com/codebattle/GameMessage.java src/com/codebattle/GameServer.java src/com/codebattle/GameClient.java
-if %ERRORLEVEL% equ 0 (echo BUILD SUCCESS!) else (echo BUILD FAILED!)
+echo [*] Compiling Source Code...
+if not exist build mkdir build
+javac -encoding UTF-8 -d build src/com/codebattle/*.java
+if %ERRORLEVEL% equ 0 (
+    echo [+] Compilation Successful!
+) else (
+    echo [-] Compilation Failed!
+)
 pause
 goto menu
 
 :server
-echo Starting Server...
-start "CodeBattle Server" java -cp build com.codebattle.GameServer
+echo [*] Starting Server...
+java -cp build com.codebattle.GameServer
+pause
 goto menu
 
 :client
-echo Starting Client...
-start "CodeBattle Client" java -cp build com.codebattle.GameClient
+echo [*] Starting Client...
+java -cp build com.codebattle.GameClient
 goto menu
 
 :quickplay
-echo Compiling...
-javac -encoding UTF-8 -d build src/com/codebattle/GameMessage.java src/com/codebattle/GameServer.java src/com/codebattle/GameClient.java
-echo Starting Server...
-start "CodeBattle Server" java -cp build com.codebattle.GameServer
-timeout /t 2 >nul
-echo Starting Client 1...
-start "Client 1" java -cp build com.codebattle.GameClient
-timeout /t 1 >nul
-echo Starting Client 2...
-start "Client 2" java -cp build com.codebattle.GameClient
-echo.
-echo All launched! Join from both clients and press Start Game.
+echo [*] Running Quick Play Setup...
+if not exist build mkdir build
+javac -encoding UTF-8 -d build src/com/codebattle/*.java
+if %ERRORLEVEL% equ 0 (
+    start "CodeBattle Server" java -cp build com.codebattle.GameServer
+    timeout /t 2 /nobreak > nul
+    start "CodeBattle Client 1" java -cp build com.codebattle.GameClient
+    start "CodeBattle Client 2" java -cp build com.codebattle.GameClient
+) else (
+    echo [-] Compilation Failed. Cannot start game.
+)
 pause
 goto menu

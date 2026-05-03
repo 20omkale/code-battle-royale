@@ -67,6 +67,23 @@ java -cp build com.codebattle.GameClient
 
 ---
 
+## 🚀 Quick Demo Commands
+
+For university presentations or quick tests, you do **not** need to memorize long `javac` commands. You can simply use these 1-click batch files from the terminal:
+
+- `build.bat` — Instantly compiles the entire project into the `build` folder.
+- `server.bat` — Starts the Game Server.
+- `client.bat` — Starts the Game Client.
+
+Alternatively, if you want to type the shortest possible manual commands:
+- **Compile**: `javac -d build src/com/codebattle/*.java`
+- **Run Server**: `java -cp build com.codebattle.GameServer`
+- **Run Client**: `java -cp build com.codebattle.GameClient`
+
+You can also just double-click `START_GAME.bat` and use the built-in Command Center!
+
+---
+
 ## 🕹️ How to Play
 
 1. **Host a Server**: One person needs to run the `GameServer` on their machine (or a cloud VPS).
