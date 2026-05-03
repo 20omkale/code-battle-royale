@@ -1,61 +1,82 @@
-# CodeBattle Royale
-### Distributed Multiplayer Quiz Game
-**SPPU BE IT | 414454 Lab Practice V | Distributed Systems Mini Project**
+<div align="center">
+
+# 🎮 CodeBattle Royale
+
+**A High-Performance Distributed Multiplayer Quiz Engine**
+
+[![Java](https://img.shields.io/badge/Java-11%2B-ED8B00?style=for-the-badge&logo=java&logoColor=white)](https://www.java.com/)
+[![Swing](https://img.shields.io/badge/GUI-Swing-2C2255?style=for-the-badge)](https://docs.oracle.com/javase/tutorial/uiswing/)
+[![TCP Sockets](https://img.shields.io/badge/Networking-TCP_Sockets-007396?style=for-the-badge)](https://docs.oracle.com/javase/tutorial/networking/sockets/index.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+CodeBattle Royale is a lightning-fast, real-time multiplayer trivia game built from the ground up in pure Java. Designed to demonstrate advanced distributed system concepts, it features a completely centralized authoritative server, real-time state broadcasting, and a sleek, responsive Swing-based client.
+
+[Features](#-features) • [Architecture](#-architecture) • [Quick Start](#-quick-start) • [How to Play](#-how-to-play) 
+
+</div>
 
 ---
 
-## About
-A real-time multiplayer quiz game where players compete to answer distributed systems questions. Built using Java TCP Sockets demonstrating core distributed computing concepts.
+## ✨ Features
 
-## Distributed Systems Concepts Demonstrated
+- **Real-Time Multiplayer** — Zero-lag socket communication ensures all players stay in perfect sync.
+- **Authoritative Server Architecture** — Game logic, timers, and scoring are handled server-side to prevent client spoofing or cheating.
+- **Dynamic Mutual Exclusion Scoring** — Speed matters! The first player to answer correctly receives a massive `+150` point bonus, while subsequent correct answers receive `+100` points.
+- **Smart Timer Synchronization** — A server-authoritative 15-second countdown timer that automatically skips ahead the exact moment all active players lock in their answers.
+- **Glassmorphic UI** — A modern, dark-mode Swing interface featuring custom rendering, gradient color schemes, and real-time interactive components.
+- **Live Leaderboards** — The game room scoreboard updates instantly across all connected clients the moment an event occurs.
 
-| Concept | How It's Implemented |
-|---|---|
-| **Message Passing** | TCP ObjectStreams with custom `GameMessage` protocol |
-| **Mutual Exclusion** | First correct answer gets +150 pts, late correct gets +100 pts |
-| **Clock Synchronization** | Server-authoritative 15-second countdown timer |
-| **Distributed State** | Centralized game room with broadcast score updates |
-| **Smart Timer Skip** | Server detects when all clients answered, skips remaining time |
+---
 
-## Project Structure
-```
-codebattle-royale/
-├── src/com/codebattle/
-│   ├── GameMessage.java    ← Shared message protocol (30 lines)
-│   ├── GameServer.java     ← Server + game logic + questions (220 lines)
-│   └── GameClient.java     ← Client + Swing GUI (290 lines)
-├── build/                  ← Compiled classes
-└── START_GAME.bat          ← One-click launcher
-```
+## 🏗️ Architecture Under The Hood
 
-## How to Run
+CodeBattle Royale isn't just a game; it's a practical implementation of core distributed systems patterns:
 
-### Quick Start
-1. Double-click `START_GAME.bat`
-2. Select `[4]` for Quick Play (compiles + launches server + 2 clients)
-3. Enter your name in each client and click "JOIN SERVER"
-4. Click "START GAME" in either client
-5. Answer questions — first correct answer gets bonus points!
+* **Message Passing Protocol**: Custom `GameMessage` serialized objects flow over TCP streams, cleanly defining requests (JOIN, START, ANSWER) and broadcasts (QUESTION, TIMER, RESULT).
+* **Concurrency Management**: The server handles an arbitrary number of clients using a `CopyOnWriteArrayList` and dedicated thread-per-client `Runnable` handlers.
+* **State Consistency**: By enforcing `out.reset()` on the `ObjectOutputStream`, the engine bypasses Java's aggressive object caching, ensuring clients always render the absolute latest state without stale references.
+* **Event Loop Synchronization**: All UI updates on the client side are strictly dispatched to the Event Dispatch Thread (EDT) via `SwingUtilities.invokeLater()`, guaranteeing thread-safe GUI rendering.
 
-### Manual
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Java Development Kit (JDK) 11** or higher.
+- A terminal or command prompt.
+
+### Windows (One-Click Launch)
+We've included a comprehensive Command Center script for Windows users.
+1. Clone the repository and navigate to the directory.
+2. Double-click `START_GAME.bat`.
+3. Press `[4]` to launch the **Quick Play** environment (automatically compiles the project, starts the Server, and boots up 2 test Clients).
+
+### MacOS / Linux (Manual Build)
+Compile the source and boot up the distributed nodes manually:
+
 ```bash
-# Compile
+# 1. Compile the Project
 javac -encoding UTF-8 -d build src/com/codebattle/GameMessage.java src/com/codebattle/GameServer.java src/com/codebattle/GameClient.java
 
-# Terminal 1: Start Server
+# 2. Start the Authoritative Server (Terminal 1)
 java -cp build com.codebattle.GameServer
 
-# Terminal 2+3: Start Clients
+# 3. Start the Game Clients (Terminal 2, 3, etc.)
 java -cp build com.codebattle.GameClient
 ```
 
-## Game Features
-- **10 questions** covering DS, Networking, OS, and Coding
-- **15-second timer** per question with live countdown
-- **Live scoreboard** updates in real-time after every answer
-- **Speed bonus** — first correct answer gets 150pts, later correct gets 100pts
-- **Smart skip** — timer skips when everyone has answered
-- **Game Over** screen with final scores and winner
+---
+
+## 🕹️ How to Play
+
+1. **Host a Server**: One person needs to run the `GameServer` on their machine (or a cloud VPS).
+2. **Connect**: Open the `GameClient`, enter a custom username, and hit **JOIN SERVER**.
+3. **Start**: Once everyone is in the lobby, any player can click **START GAME** to initiate the match.
+4. **Battle**: You have 15 seconds per round. Read the question and click the correct option. Remember, the *first* person to get it right gets a massive speed bonus!
+5. **Victory**: At the end of the 5-round battle, the player with the highest score is crowned the champion on the Victory Screen.
 
 ---
-*Built by Om Kale — SPPU BE IT 2019 Pattern*
+
+<div align="center">
+<i>Built with passion for high-performance distributed architecture.</i>
+</div>
