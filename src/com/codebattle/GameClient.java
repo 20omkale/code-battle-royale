@@ -349,6 +349,7 @@ public class GameClient extends JFrame {
         JButton again = new StyledButton("RETURN TO MAIN MENU", ACCENT_BLUE);
         again.setPreferredSize(new Dimension(0, 60));
         again.addActionListener(e -> {
+            intentionalDisconnect = true;
             try { if(out != null) sock.close(); } catch(Exception ex){}
             cards.show(root, "JOIN");
         });
@@ -357,9 +358,12 @@ public class GameClient extends JFrame {
         return p;
     }
 
+    volatile boolean intentionalDisconnect = false;
+
     // ─── NETWORK & LOGIC ─────────────────────────────────────────────────────
     Socket sock;
     void connectAndJoin(String room) {
+        intentionalDisconnect = false;
         myName = nameField.getText().trim();
         new Thread(() -> {
             try {
@@ -389,9 +393,11 @@ public class GameClient extends JFrame {
                     SwingUtilities.invokeLater(() -> handleMessage(msg));
                 }
             } catch (Exception e) {
-                SwingUtilities.invokeLater(() ->
-                    showProPopup("Connection Failed", "Could not connect to the CodeBattle Server.", true)
-                );
+                if (!intentionalDisconnect) {
+                    SwingUtilities.invokeLater(() ->
+                        showProPopup("Connection Failed", "Could not connect to the CodeBattle Server.", true)
+                    );
+                }
             }
         }).start();
     }
