@@ -1,61 +1,33 @@
 @echo off
-title CodeBattle Royale Command Center
+title CodeBattle Royale Launcher
 color 0A
 
-:menu
-cls
 echo ==========================================
-echo       CODEBATTLE ROYALE - COMMAND CENTER
+echo       LAUNCHING CODEBATTLE ROYALE
 echo ==========================================
-echo 1. Compile Source Code
-echo 2. Start Game Server (Host)
-echo 3. Start Game Client (Player)
-echo 4. Quick Play (Compile + Start Server + 2 Clients)
-echo 5. Exit
-echo ==========================================
-set /p choice="Enter your choice (1-5): "
+echo [*] Initializing Game Engine...
 
-if "%choice%"=="1" goto compile
-if "%choice%"=="2" goto server
-if "%choice%"=="3" goto client
-if "%choice%"=="4" goto quickplay
-if "%choice%"=="5" goto eof
-goto menu
-
-:compile
-echo [*] Compiling Source Code...
+:: Compile silently
 if not exist build mkdir build
 javac -encoding UTF-8 -d build src/com/codebattle/*.java
-if %ERRORLEVEL% equ 0 (
-    echo [+] Compilation Successful!
-) else (
-    echo [-] Compilation Failed!
+
+if %ERRORLEVEL% neq 0 (
+    color 0C
+    echo [-] Engine Initialization Failed! Please check your Java installation.
+    pause
+    exit /b
 )
-pause
-goto menu
 
-:server
-echo [*] Starting Server...
-java -cp build com.codebattle.GameServer
-pause
-goto menu
+echo [+] Engine Ready. Starting Matchmaking Server...
+:: Start server silently in background. If it's already running, this silently fails, which is exactly what we want!
+start "" javaw -cp build com.codebattle.GameServer
 
-:client
-echo [*] Starting Client...
-java -cp build com.codebattle.GameClient
-goto menu
+:: Wait 1 second to give the server time to wake up
+timeout /t 1 /nobreak > nul
 
-:quickplay
-echo [*] Running Quick Play Setup...
-if not exist build mkdir build
-javac -encoding UTF-8 -d build src/com/codebattle/*.java
-if %ERRORLEVEL% equ 0 (
-    start "CodeBattle Server" java -cp build com.codebattle.GameServer
-    timeout /t 2 /nobreak > nul
-    start "CodeBattle Client 1" java -cp build com.codebattle.GameClient
-    start "CodeBattle Client 2" java -cp build com.codebattle.GameClient
-) else (
-    echo [-] Compilation Failed. Cannot start game.
-)
-pause
-goto menu
+echo [+] Launching Game Client...
+:: Start the actual game UI silently without keeping the black terminal open
+start "" javaw -cp build com.codebattle.GameClient
+
+:: Close this launcher window immediately
+exit
