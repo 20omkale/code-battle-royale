@@ -129,7 +129,8 @@ public class GameClient extends JFrame {
         card.add(nameField, cg);
 
         cg.gridy = 3; cg.insets = new Insets(5, 20, 10, 20);
-        roomField = new JTextField("DS-LAB");
+        String randomCode = String.format("%04X", (int)(Math.random()*65535));
+        roomField = new JTextField(randomCode);
         roomField.setFont(new Font("Segoe UI", Font.BOLD, 20));
         roomField.setPreferredSize(new Dimension(300, 50));
         roomField.setBackground(BG_DARK);
@@ -152,16 +153,27 @@ public class GameClient extends JFrame {
         return p;
     }
 
+    JLabel lobbyRoomCodeLabel;
+
     // ─── LOBBY SCREEN ────────────────────────────────────────────────────────
     JPanel makeLobbyScreen() {
         JPanel p = new JPanel(new BorderLayout(20, 20));
         p.setOpaque(false);
         p.setBorder(new EmptyBorder(40, 60, 40, 60));
 
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
         JLabel title = new JLabel("WAITING LOBBY", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 32));
         title.setForeground(Color.WHITE);
-        p.add(title, BorderLayout.NORTH);
+        top.add(title, BorderLayout.NORTH);
+
+        lobbyRoomCodeLabel = new JLabel("ROOM: ----", SwingConstants.CENTER);
+        lobbyRoomCodeLabel.setFont(new Font("Consolas", Font.BOLD, 24));
+        lobbyRoomCodeLabel.setForeground(ACCENT_BLUE);
+        top.add(lobbyRoomCodeLabel, BorderLayout.SOUTH);
+        
+        p.add(top, BorderLayout.NORTH);
 
         lobbyListPanel = new GlassPanel(new FlowLayout(FlowLayout.CENTER, 20, 20), 15);
         JScrollPane scroll = new JScrollPane(lobbyListPanel);
@@ -304,7 +316,10 @@ public class GameClient extends JFrame {
                 jm.roomCode = room;
                 sendMsg(jm);
 
-                SwingUtilities.invokeLater(() -> cards.show(root, "LOBBY"));
+                SwingUtilities.invokeLater(() -> {
+                    lobbyRoomCodeLabel.setText("ROOM: " + room.toUpperCase());
+                    cards.show(root, "LOBBY");
+                });
 
                 while (true) {
                     GameMessage msg = (GameMessage) in.readObject();

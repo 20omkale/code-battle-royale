@@ -70,10 +70,11 @@ java -cp build com.codebattle.GameClient
 ## 🕹️ How to Play
 
 1. **Host a Server**: One person needs to run the `GameServer` on their machine (or a cloud VPS).
-2. **Connect**: Open the `GameClient`, enter a custom username, and hit **JOIN SERVER**.
-3. **Start**: Once everyone is in the lobby, any player can click **START GAME** to initiate the match.
-4. **Battle**: You have 15 seconds per round. Read the question and click the correct option. Remember, the *first* person to get it right gets a massive speed bonus!
-5. **Victory**: At the end of the 5-round battle, the player with the highest score is crowned the champion on the Victory Screen.
+2. **Join a Room**: Open the `GameClient`. A random 4-character **ROOM CODE** will be generated for you. Share this code with your friends so they can join your specific game room!
+3. **Connect**: Enter your username, ensure the Room Code matches your friends', and hit **JOIN MATCH**.
+4. **Start**: Once everyone is in the lobby, the host can click **START GAME (HOST)** to initiate the match.
+5. **Battle**: You have 15 seconds per round. Read the question and click the correct option. Remember, the *first* person to get it right gets a massive speed bonus!
+6. **Victory**: At the end of the 5-round battle, the player with the highest score is crowned the champion on the 3D Victory Podium.
 
 ---
 
