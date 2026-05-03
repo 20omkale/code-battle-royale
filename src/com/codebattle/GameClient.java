@@ -602,7 +602,18 @@ public class GameClient extends JFrame {
         dialog.setUndecorated(true);
         dialog.setBackground(new Color(0, 0, 0, 0));
         
-        GlassPanel panel = new GlassPanel(new BorderLayout(20, 20), 20);
+        JPanel panel = new JPanel(new BorderLayout(20, 20)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(25, 25, 35, 245)); // Almost solid dark background
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(255, 255, 255, 50)); // Subtle border
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 20, 20);
+            }
+        };
+        panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(30, 40, 30, 40));
         
         JLabel title = new JLabel(titleStr.toUpperCase(), SwingConstants.CENTER);

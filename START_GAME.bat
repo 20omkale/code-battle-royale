@@ -19,14 +19,14 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [+] Engine Ready. Starting Matchmaking Server...
-:: Start server silently in background. If it's already running, this silently fails, which is exactly what we want!
-start "" javaw -cp build com.codebattle.GameServer
+:: Start server minimized in background. 
+start /MIN "CodeBattle Server" java -cp build com.codebattle.GameServer
 
-:: Wait 1 second to give the server time to wake up
-timeout /t 1 /nobreak > nul
+:: Wait 2 seconds to give the server time to bind the port
+timeout /t 2 /nobreak > nul
 
 echo [+] Launching Game Client...
-:: Start the actual game UI silently without keeping the black terminal open
+:: Start the actual game UI silently
 start "" javaw -cp build com.codebattle.GameClient
 
 :: Close this launcher window immediately
