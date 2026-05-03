@@ -18,6 +18,7 @@ public class GameClient extends JFrame {
     ObjectOutputStream out;
     ObjectInputStream in;
     String myName = "";
+    boolean isHost = false;
 
     // Brand Colors
     static final Color BG_DARK = new Color(13, 17, 23);
@@ -38,6 +39,13 @@ public class GameClient extends JFrame {
     JTextField roomField;
     JPanel lobbyListPanel;
     JButton startBtn;
+    JLabel lobbyRoomCodeLabel;
+    
+    // Host Settings
+    JComboBox<String> roundsCombo;
+    JComboBox<String> diffCombo;
+    JPanel hostSettingsPanel;
+    JLabel waitingLabel;
     
     // Game Components
     JLabel timerLabel;
@@ -132,6 +140,7 @@ public class GameClient extends JFrame {
         JButton createBtn = new StyledButton("CREATE NEW ROOM (HOST)", ACCENT_GREEN);
         createBtn.setPreferredSize(new Dimension(300, 50));
         createBtn.addActionListener(e -> {
+            isHost = true;
             String randomCode = String.format("%04X", (int)(Math.random()*65535));
             connectAndJoin(randomCode);
         });
@@ -160,6 +169,7 @@ public class GameClient extends JFrame {
         JButton joinBtn = new StyledButton("JOIN MATCH", ACCENT_BLUE);
         joinBtn.setPreferredSize(new Dimension(300, 50));
         joinBtn.addActionListener(e -> {
+            isHost = false;
             String code = roomField.getText().trim();
             if (code.isEmpty()) JOptionPane.showMessageDialog(this, "Enter a valid Room Code");
             else connectAndJoin(code);
@@ -169,8 +179,6 @@ public class GameClient extends JFrame {
         p.add(card, g);
         return p;
     }
-
-    JLabel lobbyRoomCodeLabel;
 
     // ─── LOBBY SCREEN ────────────────────────────────────────────────────────
     JPanel makeLobbyScreen() {
@@ -202,10 +210,43 @@ public class GameClient extends JFrame {
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
         
+        hostSettingsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        hostSettingsPanel.setOpaque(false);
+        
+        JLabel rL = new JLabel("Rounds:"); rL.setForeground(Color.WHITE);
+        roundsCombo = new JComboBox<>(new String[]{"3 Rounds", "5 Rounds", "10 Rounds"});
+        roundsCombo.setSelectedIndex(1);
+        
+        JLabel dL = new JLabel("Difficulty:"); dL.setForeground(Color.WHITE);
+        diffCombo = new JComboBox<>(new String[]{"Mixed", "Easy", "Medium", "Hard"});
+        
+        hostSettingsPanel.add(rL);
+        hostSettingsPanel.add(roundsCombo);
+        hostSettingsPanel.add(dL);
+        hostSettingsPanel.add(diffCombo);
+
         startBtn = new StyledButton("START GAME (HOST)", ACCENT_GREEN);
-        startBtn.setPreferredSize(new Dimension(0, 60));
-        startBtn.addActionListener(e -> sendMsg(new GameMessage(GameMessage.Type.START)));
-        bottom.add(startBtn, BorderLayout.CENTER);
+        startBtn.setPreferredSize(new Dimension(300, 60));
+        startBtn.addActionListener(e -> {
+            int rounds = Integer.parseInt(roundsCombo.getSelectedItem().toString().split(" ")[0]);
+            String diff = diffCombo.getSelectedItem().toString();
+            GameMessage msg = new GameMessage(GameMessage.Type.START);
+            msg.number = rounds;
+            msg.text = diff;
+            sendMsg(msg);
+        });
+        
+        waitingLabel = new JLabel("Waiting for host to start the match...", SwingConstants.CENTER);
+        waitingLabel.setFont(new Font("Segoe UI", Font.ITALIC, 16));
+        waitingLabel.setForeground(TEXT_MUTED);
+
+        JPanel btnPanel = new JPanel(new BorderLayout());
+        btnPanel.setOpaque(false);
+        btnPanel.add(hostSettingsPanel, BorderLayout.NORTH);
+        btnPanel.add(startBtn, BorderLayout.CENTER);
+        btnPanel.add(waitingLabel, BorderLayout.SOUTH);
+
+        bottom.add(btnPanel, BorderLayout.CENTER);
         
         eventFeed.setPreferredSize(new Dimension(0, 30));
         bottom.add(eventFeed, BorderLayout.SOUTH);
@@ -224,7 +265,7 @@ public class GameClient extends JFrame {
         // TOP: Round + Timer
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
-        roundLabel = new JLabel("Round 1/5");
+        roundLabel = new JLabel("Round 1/X");
         roundLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         roundLabel.setForeground(TEXT_MUTED);
         top.add(roundLabel, BorderLayout.WEST);
@@ -334,6 +375,12 @@ public class GameClient extends JFrame {
 
                 SwingUtilities.invokeLater(() -> {
                     lobbyRoomCodeLabel.setText("ROOM: " + room.toUpperCase());
+                    
+                    // Update UI based on Host/Player
+                    hostSettingsPanel.setVisible(isHost);
+                    startBtn.setVisible(isHost);
+                    waitingLabel.setVisible(!isHost);
+                    
                     cards.show(root, "LOBBY");
                 });
 
@@ -357,7 +404,7 @@ public class GameClient extends JFrame {
             case QUESTION:
                 cards.show(root, "GAME");
                 questionText.setText("<html><center>" + msg.text + "</center></html>");
-                roundLabel.setText("Round " + msg.number + " / 5");
+                roundLabel.setText("Round " + msg.number);
                 correctAnswer = -1;
                 for (int i = 0; i < 4; i++) {
                     optBtns[i].setText((char)('A'+i) + ". " + msg.options[i]);
@@ -422,6 +469,7 @@ public class GameClient extends JFrame {
     }
 
     void updateScoreboard(String[] names, int[] scores) {
+        if (names == null || scores == null) return;
         scoreboardPanel.removeAll();
         Integer[] idx = new Integer[names.length];
         for (int i = 0; i < idx.length; i++) idx[i] = i;
@@ -452,6 +500,7 @@ public class GameClient extends JFrame {
     }
 
     void buildPodium(String[] names, int[] scores) {
+        if (names == null || scores == null || names.length == 0) return;
         podiumPanel.removeAll();
         Integer[] idx = new Integer[names.length];
         for (int i = 0; i < idx.length; i++) idx[i] = i;

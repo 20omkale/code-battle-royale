@@ -15,18 +15,28 @@ public class GameServer {
     // Maps room codes to actual Room objects (Multi-room support)
     static ConcurrentHashMap<String, Room> activeRooms = new ConcurrentHashMap<>();
 
-    // ── Question Bank ────────────────────────────────────────────────────────
+    // ── Question Bank [Question, OptA, OptB, OptC, OptD, CorrectIdx, Difficulty]
     static String[][] QUESTIONS = {
-        {"Which algorithm is used for leader election?", "Dijkstra", "Bully", "Prim", "Kruskal", "1"},
-        {"RPC stands for?", "Remote Procedure Call", "Rapid Protocol", "Resource Process", "Remote Process", "0"},
-        {"CAP theorem covers?", "Consistency,Availability,Partition Tolerance", "CPU,Async,Performance", "Cache,API,Protocol", "Concurrency,Atomicity,Persistence", "0"},
-        {"Lamport timestamps are used to?", "Sync physical clocks", "Order events logically", "Detect partitions", "Balance load", "1"},
-        {"Mutual exclusion ensures?", "All processes run together", "Only one enters critical section", "Equal CPU time", "No deadlocks ever", "1"},
-        {"Berkeley algorithm is for?", "Routing", "Clock synchronization", "Encryption", "Load balancing", "1"},
-        {"Which OSI layer routes packets?", "Data Link", "Transport", "Network", "Session", "2"},
-        {"TCP guarantees delivery using?", "Checksums only", "ACK and retransmit", "Broadcast", "UDP fallback", "1"},
-        {"Token ring mutex works by?", "Broadcasting", "Only token holder enters CS", "Priority queue", "Random selection", "1"},
-        {"What does typeof null return in JS?", "null", "undefined", "object", "boolean", "2"},
+        // Easy
+        {"What does HTML stand for?", "Hyper Text Markup Language", "High Tech Main Loop", "Home Tool Markup", "Hyperlink Text Module", "0", "Easy"},
+        {"Which symbol is used for comments in Python?", "//", "/*", "#", "<!--", "2", "Easy"},
+        {"What does CSS do?", "Adds logic", "Styles web pages", "Queries databases", "Compiles code", "1", "Easy"},
+        {"Which operator is used for assignment in Java?", "==", "=", "===", "=>", "1", "Easy"},
+        {"What is the boolean opposite of true?", "null", "undefined", "false", "0", "2", "Easy"},
+        
+        // Medium
+        {"Which algorithm is used for leader election?", "Dijkstra", "Bully", "Prim", "Kruskal", "1", "Medium"},
+        {"RPC stands for?", "Remote Procedure Call", "Rapid Protocol", "Resource Process", "Remote Process", "0", "Medium"},
+        {"What does typeof null return in JS?", "null", "undefined", "object", "boolean", "2", "Medium"},
+        {"Which OSI layer routes packets?", "Data Link", "Transport", "Network", "Session", "2", "Medium"},
+        {"TCP guarantees delivery using?", "Checksums only", "ACK and retransmit", "Broadcast", "UDP fallback", "1", "Medium"},
+        
+        // Hard
+        {"CAP theorem covers?", "Consistency,Availability,Partition Tolerance", "CPU,Async,Performance", "Cache,API,Protocol", "Concurrency,Atomicity,Persistence", "0", "Hard"},
+        {"Lamport timestamps are used to?", "Sync physical clocks", "Order events logically", "Detect partitions", "Balance load", "1", "Hard"},
+        {"Berkeley algorithm is for?", "Routing", "Clock synchronization", "Encryption", "Load balancing", "1", "Hard"},
+        {"Token ring mutex works by?", "Broadcasting", "Only token holder enters CS", "Priority queue", "Random selection", "1", "Hard"},
+        {"Mutual exclusion ensures?", "All processes run together", "Only one enters critical section", "Equal CPU time", "No deadlocks ever", "1", "Hard"}
     };
 
     public static void main(String[] args) throws Exception {
@@ -73,15 +83,20 @@ public class GameServer {
             broadcast(msg);
         }
 
-        void startGame() {
+        void startGame(int maxRounds, String difficulty) {
             if (gameRunning) return;
             gameRunning = true;
 
             new Thread(() -> {
                 try {
-                    List<String[]> qs = new ArrayList<>(Arrays.asList(QUESTIONS));
+                    List<String[]> qs = new ArrayList<>();
+                    for (String[] q : QUESTIONS) {
+                        if (difficulty.equals("Mixed") || q[6].equalsIgnoreCase(difficulty)) {
+                            qs.add(q);
+                        }
+                    }
                     Collections.shuffle(qs);
-                    int total = Math.min(5, qs.size());
+                    int total = Math.min(maxRounds, qs.size());
 
                     for (int q = 0; q < total; q++) {
                         String[] data = qs.get(q);
@@ -125,6 +140,17 @@ public class GameServer {
 
                     sendPlayerList();
                     GameMessage gm = new GameMessage(GameMessage.Type.GAMEOVER);
+                    
+                    // Attach names and scores to fix NPE on client side
+                    String[] finalNames = new String[players.size()];
+                    int[] finalScores = new int[players.size()];
+                    for (int i = 0; i < players.size(); i++) {
+                        finalNames[i] = players.get(i).name;
+                        finalScores[i] = players.get(i).score;
+                    }
+                    gm.names = finalNames;
+                    gm.scores = finalScores;
+                    
                     broadcast(gm);
                     gameRunning = false;
                     activeRooms.remove(code); // Clean up room after game ends
@@ -181,8 +207,10 @@ public class GameServer {
 
                         case START:
                             if (myRoom != null && myRoom.players.size() >= 1) {
-                                myRoom.broadcastEvent("*** Match started by " + name + "!");
-                                myRoom.startGame();
+                                int rounds = msg.number > 0 ? msg.number : 5;
+                                String diff = (msg.text != null) ? msg.text : "Mixed";
+                                myRoom.broadcastEvent("*** Match started by " + name + "! (" + rounds + " Rounds | " + diff + " Mode)");
+                                myRoom.startGame(rounds, diff);
                             }
                             break;
 
