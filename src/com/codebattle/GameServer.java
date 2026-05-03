@@ -175,13 +175,13 @@ public class GameServer {
 
                             myRoom.players.add(this);
                             System.out.println("[+] " + name + " joined room " + code);
-                            myRoom.broadcastEvent("🔥 " + name + " joined Room " + code + "!");
+                            myRoom.broadcastEvent(">>> " + name + " joined Room " + code + "!");
                             myRoom.sendPlayerList();
                             break;
 
                         case START:
                             if (myRoom != null && myRoom.players.size() >= 1) {
-                                myRoom.broadcastEvent("🎮 Match started by " + name + "!");
+                                myRoom.broadcastEvent("*** Match started by " + name + "!");
                                 myRoom.startGame();
                             }
                             break;
@@ -194,13 +194,13 @@ public class GameServer {
                                     if (!myRoom.firstCorrectTaken) {
                                         myRoom.firstCorrectTaken = true;
                                         score += 150;
-                                        myRoom.broadcastEvent("⚡ FIRST STRIKE! " + name + " answered perfectly! (+150)");
+                                        myRoom.broadcastEvent("FIRST STRIKE! " + name + " answered perfectly! (+150)");
                                     } else {
                                         score += 100;
-                                        myRoom.broadcastEvent("✔️ " + name + " got it right! (+100)");
+                                        myRoom.broadcastEvent("CORRECT! " + name + " got it right! (+100)");
                                     }
                                 } else {
-                                    myRoom.broadcastEvent("💀 " + name + " missed the shot...");
+                                    myRoom.broadcastEvent("INCORRECT! " + name + " missed the shot...");
                                 }
                                 myRoom.sendPlayerList();
                             }
@@ -212,7 +212,7 @@ public class GameServer {
             } catch (Exception e) {
                 if (myRoom != null) {
                     myRoom.players.remove(this);
-                    myRoom.broadcastEvent("🚪 " + name + " disconnected.");
+                    myRoom.broadcastEvent("<<< " + name + " disconnected.");
                     if (!myRoom.players.isEmpty()) myRoom.sendPlayerList();
                     else activeRooms.remove(myRoom.code); // destroy empty room
                 }

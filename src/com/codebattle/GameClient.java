@@ -97,13 +97,13 @@ public class GameClient extends JFrame {
         GridBagConstraints g = new GridBagConstraints();
 
         GlassPanel card = new GlassPanel(new GridBagLayout(), 20);
-        card.setPreferredSize(new Dimension(500, 480));
+        card.setPreferredSize(new Dimension(500, 520));
         
         GridBagConstraints cg = new GridBagConstraints();
         cg.insets = new Insets(10, 10, 10, 10);
         cg.gridy = 0;
         
-        JLabel logo = new JLabel("🎮 CodeBattle Royale", SwingConstants.CENTER);
+        JLabel logo = new JLabel("CodeBattle Royale", SwingConstants.CENTER);
         logo.setFont(new Font("Segoe UI", Font.BOLD, 36));
         logo.setForeground(Color.WHITE);
         card.add(logo, cg);
@@ -114,7 +114,7 @@ public class GameClient extends JFrame {
         sub.setForeground(ACCENT_PURPLE);
         card.add(sub, cg);
 
-        cg.gridy = 2; cg.insets = new Insets(30, 20, 5, 20);
+        cg.gridy = 2; cg.insets = new Insets(30, 20, 10, 20);
         nameField = new JTextField("Player" + (int)(Math.random()*9000));
         nameField.setFont(new Font("Segoe UI", Font.BOLD, 20));
         nameField.setPreferredSize(new Dimension(300, 50));
@@ -128,9 +128,22 @@ public class GameClient extends JFrame {
         ));
         card.add(nameField, cg);
 
-        cg.gridy = 3; cg.insets = new Insets(5, 20, 10, 20);
-        String randomCode = String.format("%04X", (int)(Math.random()*65535));
-        roomField = new JTextField(randomCode);
+        cg.gridy = 3; cg.insets = new Insets(10, 20, 5, 20);
+        JButton createBtn = new StyledButton("CREATE NEW ROOM (HOST)", ACCENT_GREEN);
+        createBtn.setPreferredSize(new Dimension(300, 50));
+        createBtn.addActionListener(e -> {
+            String randomCode = String.format("%04X", (int)(Math.random()*65535));
+            connectAndJoin(randomCode);
+        });
+        card.add(createBtn, cg);
+
+        cg.gridy = 4; cg.insets = new Insets(10, 20, 5, 20);
+        JLabel orLabel = new JLabel("— OR JOIN EXISTING —");
+        orLabel.setForeground(TEXT_MUTED);
+        card.add(orLabel, cg);
+
+        cg.gridy = 5; cg.insets = new Insets(5, 20, 5, 20);
+        roomField = new JTextField();
         roomField.setFont(new Font("Segoe UI", Font.BOLD, 20));
         roomField.setPreferredSize(new Dimension(300, 50));
         roomField.setBackground(BG_DARK);
@@ -139,14 +152,18 @@ public class GameClient extends JFrame {
         roomField.setHorizontalAlignment(JTextField.CENTER);
         roomField.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(ACCENT_BLUE, 2, true),
-            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), "ROOM CODE", 0, 0, new Font("Segoe UI", Font.BOLD, 10), TEXT_MUTED)
+            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), "ENTER ROOM CODE", 0, 0, new Font("Segoe UI", Font.BOLD, 10), TEXT_MUTED)
         ));
         card.add(roomField, cg);
 
-        cg.gridy = 4; cg.insets = new Insets(10, 20, 20, 20);
-        JButton joinBtn = new StyledButton("JOIN MATCH", ACCENT_PURPLE);
+        cg.gridy = 6; cg.insets = new Insets(5, 20, 20, 20);
+        JButton joinBtn = new StyledButton("JOIN MATCH", ACCENT_BLUE);
         joinBtn.setPreferredSize(new Dimension(300, 50));
-        joinBtn.addActionListener(e -> connectAndJoin());
+        joinBtn.addActionListener(e -> {
+            String code = roomField.getText().trim();
+            if (code.isEmpty()) JOptionPane.showMessageDialog(this, "Enter a valid Room Code");
+            else connectAndJoin(code);
+        });
         card.add(joinBtn, cg);
 
         p.add(card, g);
@@ -279,7 +296,7 @@ public class GameClient extends JFrame {
         p.setOpaque(false);
         p.setBorder(new EmptyBorder(40, 40, 40, 40));
 
-        JLabel title = new JLabel("🏆 MATCH COMPLETE 🏆", SwingConstants.CENTER);
+        JLabel title = new JLabel("MATCH COMPLETE", SwingConstants.CENTER);
         title.setFont(new Font("Segoe UI", Font.BOLD, 42));
         title.setForeground(ACCENT_PURPLE);
         p.add(title, BorderLayout.NORTH);
@@ -301,9 +318,8 @@ public class GameClient extends JFrame {
 
     // ─── NETWORK & LOGIC ─────────────────────────────────────────────────────
     Socket sock;
-    void connectAndJoin() {
+    void connectAndJoin(String room) {
         myName = nameField.getText().trim();
-        String room = roomField.getText().trim();
         new Thread(() -> {
             try {
                 sock = new Socket("localhost", 5000);
@@ -396,7 +412,7 @@ public class GameClient extends JFrame {
     void updateLobby(String[] names, int[] scores) {
         lobbyListPanel.removeAll();
         for (int i = 0; i < names.length; i++) {
-            JLabel p = new JLabel("👤 " + names[i]);
+            JLabel p = new JLabel("  " + names[i] + "  ");
             p.setFont(new Font("Segoe UI", Font.BOLD, 18));
             p.setForeground(Color.WHITE);
             p.setBorder(new EmptyBorder(10, 20, 10, 20));
@@ -419,8 +435,8 @@ public class GameClient extends JFrame {
                 new EmptyBorder(10, 10, 10, 10)
             ));
             
-            String medal = i == 0 ? "🥇 " : i == 1 ? "🥈 " : i == 2 ? "🥉 " : "  ";
-            JLabel n = new JLabel(medal + names[idx[i]]);
+            String rankStr = i == 0 ? "[1] " : i == 1 ? "[2] " : i == 2 ? "[3] " : "[-] ";
+            JLabel n = new JLabel(rankStr + names[idx[i]]);
             n.setFont(new Font("Segoe UI", Font.BOLD, 14));
             n.setForeground(Color.WHITE);
             
