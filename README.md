@@ -69,13 +69,15 @@ java -cp build com.codebattle.GameClient
 
 ## 🚀 Quick Demo Commands
 
-For university presentations, keep it simple. You don't need any complex scripts. Just open your terminal and use these tiny commands:
+For university presentations, keep it simple. You don't need any complex scripts or terminal commands.
 
-- **Compile**: `javac -d build src/com/codebattle/*.java`
-- **Run Server**: `java -cp build com.codebattle.GameServer`
-- **Run Client**: `java -cp build com.codebattle.GameClient`
+Just double-click **`START_GAME.bat`**!
 
-Alternatively, you can just double-click `START_GAME.bat` and use the built-in Command Center!
+*   It will automatically compile the engine.
+*   It will automatically start the background server.
+*   It will automatically launch the game client for you.
+
+If you want to test multiplayer locally, just double-click `START_GAME.bat` a second time to open another client!
 
 ---
 
