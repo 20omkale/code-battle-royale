@@ -13,7 +13,7 @@ public class GameMessage implements Serializable {
         // Client -> Server
         JOIN, START, ANSWER,
         // Server -> Client
-        WELCOME, PLAYER_LIST, QUESTION, TIMER, RESULT, GAMEOVER, ERROR
+        WELCOME, PLAYER_LIST, QUESTION, TIMER, RESULT, GAMEOVER, ERROR, EVENT
     }
 
     public Type type;

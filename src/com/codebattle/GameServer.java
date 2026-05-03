@@ -141,6 +141,12 @@ public class GameServer {
         }).start();
     }
 
+    static void broadcastEvent(String text) {
+        GameMessage m = new GameMessage(GameMessage.Type.EVENT);
+        m.text = text;
+        broadcast(m);
+    }
+
     // ── Per-Client Handler ───────────────────────────────────────────────────
     static class Handler implements Runnable {
         Socket sock;
@@ -171,12 +177,13 @@ public class GameServer {
                             name = msg.text;
                             players.add(this);
                             System.out.println("[+] " + name + " joined (" + players.size() + " players)");
+                            broadcastEvent("🔥 " + name + " dropped into the lobby!");
                             sendPlayerList();
                             break;
 
                         case START:
                             if (players.size() >= 1) {
-                                System.out.println("[*] Game started by " + name);
+                                broadcastEvent("🎮 Match started by " + name + "!");
                                 startGame();
                             }
                             break;
@@ -191,13 +198,13 @@ public class GameServer {
                                     if (!firstCorrectTaken) {
                                         firstCorrectTaken = true;
                                         score += 150;  // First correct: 150 pts
-                                        System.out.println("  >> " + name + " FIRST correct! +150");
+                                        broadcastEvent("⚡ FIRST STRIKE! " + name + " answered perfectly! (+150)");
                                     } else {
                                         score += 100;  // Late correct: 100 pts
-                                        System.out.println("  >> " + name + " correct! +100");
+                                        broadcastEvent("✔️ " + name + " got it right! (+100)");
                                     }
                                 } else {
-                                    System.out.println("  >> " + name + " wrong (chose " + choice + ", correct was " + currentCorrect + ")");
+                                    broadcastEvent("💀 " + name + " missed the shot...");
                                 }
                                 sendPlayerList(); // Real-time leaderboard update
                             }
@@ -208,7 +215,7 @@ public class GameServer {
                 }
             } catch (Exception e) {
                 players.remove(this);
-                System.out.println("[-] " + name + " disconnected");
+                broadcastEvent("🚪 " + name + " disconnected.");
                 if (!players.isEmpty()) sendPlayerList();
             }
         }
