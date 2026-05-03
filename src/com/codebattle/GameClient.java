@@ -64,8 +64,8 @@ public class GameClient extends JFrame {
 
     public GameClient() {
         super("CodeBattle Royale");
-        setSize(1000, 700);
-        setMinimumSize(new Dimension(800, 600));
+        setSize(800, 500);
+        setMinimumSize(new Dimension(400, 300));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -105,14 +105,14 @@ public class GameClient extends JFrame {
         GridBagConstraints g = new GridBagConstraints();
 
         GlassPanel card = new GlassPanel(new GridBagLayout(), 20);
-        card.setPreferredSize(new Dimension(500, 520));
+        card.setPreferredSize(new Dimension(380, 420));
         
         GridBagConstraints cg = new GridBagConstraints();
         cg.insets = new Insets(10, 10, 10, 10);
         cg.gridy = 0;
         
         JLabel logo = new JLabel("CodeBattle Royale", SwingConstants.CENTER);
-        logo.setFont(new Font("Segoe UI", Font.BOLD, 36));
+        logo.setFont(new Font("Segoe UI", Font.BOLD, 28));
         logo.setForeground(Color.WHITE);
         card.add(logo, cg);
 
@@ -122,10 +122,10 @@ public class GameClient extends JFrame {
         sub.setForeground(ACCENT_PURPLE);
         card.add(sub, cg);
 
-        cg.gridy = 2; cg.insets = new Insets(30, 20, 10, 20);
+        cg.gridy = 2; cg.insets = new Insets(20, 20, 10, 20);
         nameField = new JTextField("Player" + (int)(Math.random()*9000));
         nameField.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        nameField.setPreferredSize(new Dimension(300, 50));
+        nameField.setPreferredSize(new Dimension(250, 45));
         nameField.setBackground(BG_DARK);
         nameField.setForeground(Color.WHITE);
         nameField.setCaretColor(ACCENT_BLUE);
@@ -138,7 +138,7 @@ public class GameClient extends JFrame {
 
         cg.gridy = 3; cg.insets = new Insets(10, 20, 5, 20);
         JButton createBtn = new StyledButton("CREATE NEW ROOM (HOST)", ACCENT_GREEN);
-        createBtn.setPreferredSize(new Dimension(300, 50));
+        createBtn.setPreferredSize(new Dimension(250, 45));
         createBtn.addActionListener(e -> {
             isHost = true;
             String randomCode = String.format("%04X", (int)(Math.random()*65535));
@@ -154,7 +154,7 @@ public class GameClient extends JFrame {
         cg.gridy = 5; cg.insets = new Insets(5, 20, 5, 20);
         roomField = new JTextField();
         roomField.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        roomField.setPreferredSize(new Dimension(300, 50));
+        roomField.setPreferredSize(new Dimension(250, 45));
         roomField.setBackground(BG_DARK);
         roomField.setForeground(Color.WHITE);
         roomField.setCaretColor(ACCENT_BLUE);
@@ -167,7 +167,7 @@ public class GameClient extends JFrame {
 
         cg.gridy = 6; cg.insets = new Insets(5, 20, 20, 20);
         JButton joinBtn = new StyledButton("JOIN MATCH", ACCENT_BLUE);
-        joinBtn.setPreferredSize(new Dimension(300, 50));
+        joinBtn.setPreferredSize(new Dimension(250, 45));
         joinBtn.addActionListener(e -> {
             isHost = false;
             String code = roomField.getText().trim();
@@ -226,7 +226,7 @@ public class GameClient extends JFrame {
         hostSettingsPanel.add(diffCombo);
 
         startBtn = new StyledButton("START GAME (HOST)", ACCENT_GREEN);
-        startBtn.setPreferredSize(new Dimension(300, 60));
+        startBtn.setPreferredSize(new Dimension(250, 50));
         startBtn.addActionListener(e -> {
             int rounds = Integer.parseInt(roundsCombo.getSelectedItem().toString().split(" ")[0]);
             String diff = diffCombo.getSelectedItem().toString();
@@ -309,7 +309,7 @@ public class GameClient extends JFrame {
 
         // RIGHT: Live Scoreboard
         GlassPanel right = new GlassPanel(new BorderLayout(), 15);
-        right.setPreferredSize(new Dimension(250, 0));
+        right.setPreferredSize(new Dimension(200, 0));
         JLabel sTitle = new JLabel("LIVE STANDINGS", SwingConstants.CENTER);
         sTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
         sTitle.setForeground(ACCENT_PURPLE);
@@ -338,7 +338,7 @@ public class GameClient extends JFrame {
         p.setBorder(new EmptyBorder(40, 40, 40, 40));
 
         JLabel title = new JLabel("MATCH COMPLETE", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 42));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 32));
         title.setForeground(ACCENT_PURPLE);
         p.add(title, BorderLayout.NORTH);
 
@@ -527,7 +527,7 @@ public class GameClient extends JFrame {
 
         // Draw top 3 (2nd, 1st, 3rd)
         int[] order = {1, 0, 2}; 
-        int[] heights = {150, 220, 100};
+        int[] heights = {100, 150, 60};
         Color[] colors = {new Color(192, 192, 192), new Color(255, 215, 0), new Color(205, 127, 50)};
         
         for (int i = 0; i < 3; i++) {
@@ -539,7 +539,7 @@ public class GameClient extends JFrame {
                 col.setOpaque(false);
                 
                 JLabel n = new JLabel(names[idx[rank]], SwingConstants.CENTER);
-                n.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                n.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 n.setForeground(Color.WHITE);
                 col.add(n, BorderLayout.NORTH);
                 
@@ -549,13 +549,13 @@ public class GameClient extends JFrame {
                 col.add(s, BorderLayout.CENTER);
                 
                 JPanel block = new JPanel();
-                block.setBackground(colors[rank]);
-                block.setPreferredSize(new Dimension(150, heights[i]));
-                block.setBorder(new LineBorder(Color.WHITE, 2));
+        block.setBackground(colors[rank]);
+        block.setPreferredSize(new Dimension(100, heights[i]));
+        block.setBorder(new LineBorder(Color.WHITE, 2));
                 
                 JLabel r = new JLabel("#" + (rank+1), SwingConstants.CENTER);
-                r.setFont(new Font("Segoe UI", Font.BOLD, 40));
-                r.setForeground(new Color(0,0,0,100));
+        r.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        r.setForeground(new Color(0,0,0,100));
                 block.add(r);
                 
                 col.add(block, BorderLayout.SOUTH);
