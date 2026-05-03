@@ -35,6 +35,7 @@ public class GameClient extends JFrame {
 
     // UI Components
     JTextField nameField;
+    JTextField roomField;
     JPanel lobbyListPanel;
     JButton startBtn;
     
@@ -96,7 +97,7 @@ public class GameClient extends JFrame {
         GridBagConstraints g = new GridBagConstraints();
 
         GlassPanel card = new GlassPanel(new GridBagLayout(), 20);
-        card.setPreferredSize(new Dimension(500, 400));
+        card.setPreferredSize(new Dimension(500, 480));
         
         GridBagConstraints cg = new GridBagConstraints();
         cg.insets = new Insets(10, 10, 10, 10);
@@ -113,7 +114,7 @@ public class GameClient extends JFrame {
         sub.setForeground(ACCENT_PURPLE);
         card.add(sub, cg);
 
-        cg.gridy = 2; cg.insets = new Insets(40, 20, 10, 20);
+        cg.gridy = 2; cg.insets = new Insets(30, 20, 5, 20);
         nameField = new JTextField("Player" + (int)(Math.random()*9000));
         nameField.setFont(new Font("Segoe UI", Font.BOLD, 20));
         nameField.setPreferredSize(new Dimension(300, 50));
@@ -123,11 +124,25 @@ public class GameClient extends JFrame {
         nameField.setHorizontalAlignment(JTextField.CENTER);
         nameField.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(ACCENT_PURPLE, 2, true),
-            new EmptyBorder(5, 10, 5, 10)
+            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), "YOUR NAME", 0, 0, new Font("Segoe UI", Font.BOLD, 10), TEXT_MUTED)
         ));
         card.add(nameField, cg);
 
-        cg.gridy = 3; cg.insets = new Insets(10, 20, 20, 20);
+        cg.gridy = 3; cg.insets = new Insets(5, 20, 10, 20);
+        roomField = new JTextField("DS-LAB");
+        roomField.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        roomField.setPreferredSize(new Dimension(300, 50));
+        roomField.setBackground(BG_DARK);
+        roomField.setForeground(Color.WHITE);
+        roomField.setCaretColor(ACCENT_BLUE);
+        roomField.setHorizontalAlignment(JTextField.CENTER);
+        roomField.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(ACCENT_BLUE, 2, true),
+            BorderFactory.createTitledBorder(new EmptyBorder(0,0,0,0), "ROOM CODE", 0, 0, new Font("Segoe UI", Font.BOLD, 10), TEXT_MUTED)
+        ));
+        card.add(roomField, cg);
+
+        cg.gridy = 4; cg.insets = new Insets(10, 20, 20, 20);
         JButton joinBtn = new StyledButton("JOIN MATCH", ACCENT_PURPLE);
         joinBtn.setPreferredSize(new Dimension(300, 50));
         joinBtn.addActionListener(e -> connectAndJoin());
@@ -276,6 +291,7 @@ public class GameClient extends JFrame {
     Socket sock;
     void connectAndJoin() {
         myName = nameField.getText().trim();
+        String room = roomField.getText().trim();
         new Thread(() -> {
             try {
                 sock = new Socket("localhost", 5000);
@@ -285,6 +301,7 @@ public class GameClient extends JFrame {
 
                 GameMessage jm = new GameMessage(GameMessage.Type.JOIN);
                 jm.text = myName;
+                jm.roomCode = room;
                 sendMsg(jm);
 
                 SwingUtilities.invokeLater(() -> cards.show(root, "LOBBY"));

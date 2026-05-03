@@ -18,6 +18,7 @@ public class GameMessage implements Serializable {
 
     public Type type;
     public String text;
+    public String roomCode;
     public String[] options;
     public int number;
     public String[] names;
