@@ -171,7 +171,7 @@ public class GameClient extends JFrame {
         joinBtn.addActionListener(e -> {
             isHost = false;
             String code = roomField.getText().trim();
-            if (code.isEmpty()) JOptionPane.showMessageDialog(this, "Enter a valid Room Code");
+            if (code.isEmpty()) showProPopup("Error", "Please enter a valid Room Code.", true);
             else connectAndJoin(code);
         });
         card.add(joinBtn, cg);
@@ -390,7 +390,8 @@ public class GameClient extends JFrame {
                 }
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() ->
-                    JOptionPane.showMessageDialog(this, "Could not connect to server.", "Error", JOptionPane.ERROR_MESSAGE));
+                    showProPopup("Connection Failed", "Could not connect to the CodeBattle Server.", true)
+                );
             }
         }).start();
     }
@@ -585,6 +586,41 @@ public class GameClient extends JFrame {
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
             super.paintComponent(g);
         }
+    }
+
+    // ─── PRO POPUPS ──────────────────────────────────────────────────────────
+    void showProPopup(String titleStr, String message, boolean isError) {
+        JDialog dialog = new JDialog(this, titleStr, true);
+        dialog.setUndecorated(true);
+        dialog.setBackground(new Color(0, 0, 0, 0));
+        
+        GlassPanel panel = new GlassPanel(new BorderLayout(20, 20), 20);
+        panel.setBorder(new EmptyBorder(30, 40, 30, 40));
+        
+        JLabel title = new JLabel(titleStr.toUpperCase(), SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        title.setForeground(isError ? ACCENT_RED : ACCENT_BLUE);
+        panel.add(title, BorderLayout.NORTH);
+        
+        JLabel msg = new JLabel("<html><center>" + message + "</center></html>", SwingConstants.CENTER);
+        msg.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        msg.setForeground(Color.WHITE);
+        panel.add(msg, BorderLayout.CENTER);
+        
+        JButton okBtn = new StyledButton("OK", isError ? ACCENT_RED : ACCENT_BLUE);
+        okBtn.setPreferredSize(new Dimension(100, 40));
+        okBtn.addActionListener(e -> dialog.dispose());
+        
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnPanel.setOpaque(false);
+        btnPanel.add(okBtn);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+        
+        dialog.add(panel);
+        dialog.pack();
+        dialog.setSize(Math.max(400, dialog.getWidth()), Math.max(200, dialog.getHeight()));
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     public static void main(String[] args) {
