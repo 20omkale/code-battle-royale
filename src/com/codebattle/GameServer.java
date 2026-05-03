@@ -117,9 +117,16 @@ public class GameServer {
                             broadcast(tm);
 
                             if (t > 0) {
-                                Thread.sleep(1000);
-                                boolean allDone = true;
-                                for (Handler h : players) if (!h.answered) allDone = false;
+                                boolean allDone = false;
+                                for (int wait = 0; wait < 10; wait++) {
+                                    Thread.sleep(100);
+                                    allDone = true;
+                                    for (Handler h : players) {
+                                        if (!h.answered) allDone = false;
+                                    }
+                                    if (allDone) break;
+                                }
+                                
                                 if (allDone) {
                                     GameMessage skip = new GameMessage(GameMessage.Type.TIMER);
                                     skip.number = 0;
@@ -135,7 +142,7 @@ public class GameServer {
                         sendPlayerList();
                         broadcast(rm);
 
-                        Thread.sleep(4000);
+                        Thread.sleep(2500);
                     }
 
                     sendPlayerList();
