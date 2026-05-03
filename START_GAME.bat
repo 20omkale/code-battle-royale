@@ -24,7 +24,8 @@ goto menu
 
 :compile
 echo [*] Compiling Source Code...
-javac -encoding UTF-8 src/com/codebattle/*.java
+if not exist build mkdir build
+javac -encoding UTF-8 -d build src/com/codebattle/*.java
 if %ERRORLEVEL% equ 0 (
     echo [+] Compilation Successful!
 ) else (
@@ -35,23 +36,24 @@ goto menu
 
 :server
 echo [*] Starting Server...
-java -cp src com.codebattle.GameServer
+java -cp build com.codebattle.GameServer
 pause
 goto menu
 
 :client
 echo [*] Starting Client...
-java -cp src com.codebattle.GameClient
+java -cp build com.codebattle.GameClient
 goto menu
 
 :quickplay
 echo [*] Running Quick Play Setup...
-javac -encoding UTF-8 src/com/codebattle/*.java
+if not exist build mkdir build
+javac -encoding UTF-8 -d build src/com/codebattle/*.java
 if %ERRORLEVEL% equ 0 (
-    start "CodeBattle Server" java -cp src com.codebattle.GameServer
+    start "CodeBattle Server" java -cp build com.codebattle.GameServer
     timeout /t 2 /nobreak > nul
-    start "CodeBattle Client 1" java -cp src com.codebattle.GameClient
-    start "CodeBattle Client 2" java -cp src com.codebattle.GameClient
+    start "CodeBattle Client 1" java -cp build com.codebattle.GameClient
+    start "CodeBattle Client 2" java -cp build com.codebattle.GameClient
 ) else (
     echo [-] Compilation Failed. Cannot start game.
 )

@@ -69,11 +69,11 @@ java -cp build com.codebattle.GameClient
 
 ## 🚀 Quick Demo Commands
 
-For university presentations, keep it simple. You don't need any complex folders or scripts. Just open your terminal and use these tiny commands:
+For university presentations, keep it simple. You don't need any complex scripts. Just open your terminal and use these tiny commands:
 
-- **Compile**: `javac src/com/codebattle/*.java`
-- **Run Server**: `java -cp src com.codebattle.GameServer`
-- **Run Client**: `java -cp src com.codebattle.GameClient`
+- **Compile**: `javac -d build src/com/codebattle/*.java`
+- **Run Server**: `java -cp build com.codebattle.GameServer`
+- **Run Client**: `java -cp build com.codebattle.GameClient`
 
 Alternatively, you can just double-click `START_GAME.bat` and use the built-in Command Center!
 
